@@ -1,4 +1,5 @@
 import os
+import sys
 from tabulate import tabulate
 from collections import Counter
 
@@ -7,6 +8,30 @@ import datetime
 from tqdm import tqdm
 import requests
 from collections import defaultdict
+
+# 开奖数据文件路径
+path_lottery = './ssq_asc.txt'
+
+
+def read_lottery_data(row=0, column=9):
+    """读取开奖数据
+
+    Args:
+        row (int, optional): 指定读取行数，0是全部数据. Defaults to 0.
+        column (int, optional): 指定读取列数. Defaults to 9.
+    """
+    
+    # 读取数据(开奖信息)
+    with open(path_lottery, 'r') as f:
+        list_lottery = []
+        for line in f:
+            fields = line.strip().split()   # 去除空格
+            list_lottery.append(fields)     # 添加到列表
+    
+    # 返回指定行数的数据
+    if row != 0:
+        return list_lottery[-row:]
+
 
 
 def debug_print(message):
@@ -20,7 +45,7 @@ def debug_print(message):
     # 格式化时间戳字符串
     timestamp_str = current_time.strftime('[%Y-%m-%d %H:%M:%S]')
     # 打印带时间戳的调试信息
-    print(f'{timestamp_str} {message}')
+    print(f'[Info]{timestamp_str} {message}')
 
 
 def print_lottery_data(row=30, column=9):
@@ -49,24 +74,31 @@ def print_lottery_data(row=30, column=9):
 
 
 def requests_data():
-    """请求更新数据并保存到本地
+    """请求更新数据并保存到本地（覆盖原有数据）
     """
-    debug_print('开始更新开奖数据...\n')
 
+    debug_print('开始更新开奖数据...')
     url = 'http://data.17500.cn/ssq_asc.txt'
-    path = os.getcwd() + '\\ssq_asc.txt'
+
+    # 设置请求头
     headers = {
         'User-Agent':
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.50'
     }
 
+    # 发送请求
     rs = requests.get(url=url, headers=headers)
+
+    # 判断请求是否成功 200表示成功 404表示失败 403表示禁止访问 500表示服务器错误 502表示网关错误 503表示服务不可用 504表示网关超时
     if rs.status_code == 200:
-        with open(path, 'wb') as f:
+        # 保存数据到本地(覆盖原有数据)，文件名：ssq_asc.txt
+        with open(path_lottery, 'wb') as f:
             f.write(rs.content)
-            debug_print('更新开奖数据更新成功...\n')
+            debug_print('更新开奖数据更新成功...')
     else:
-        debug_print('更新数据更新失败, 请检查网络链接!\n')
+        debug_print('更新数据更新失败, 请检查网络链接!')
+        sys.exit(1)  # 退出程序
+
 
 
 def make_all_combos():
@@ -224,8 +256,7 @@ def get_condition_data(intervals, exception_numbers):
         debug_print(f'共输出{num_lines}个组合')
 
 
-
-def check_consecutive_count(counter = 1):
+def check_consecutive_count(counter=1):
     # 打开原始文件和新文件
     with open('output.txt', 'r') as input_file, open('test.txt', 'w') as output_file:
         # 逐行读取原始文件内容
