@@ -1,94 +1,72 @@
-import m_functions as mf
-import os
+import pandas as pd
+import py_utils as u
+import py_request as req
 
-def main():
-    
-    # 判断是否需要对数据进行清理
-    while True:
-        is_clean = input('是否需要对数据进行清理?\n(y/n): ')
-        if is_clean.lower() not in ['y', 'n']:
-            print('输入错误：请输入 y 或 n !')
-        else:
-            break
-    
-    # 根据输入的内容，决定是否对数据进行清理
-    if is_clean == 'y':
-        # 生成1-33红球排列组合
-        mf.make_all_combos()
-        # 清理3个及3个以上连号
-        mf.check_consecutive_count()
+
+u.debug_print('程序开始运行...')
+
+# 更新开奖数据
+req.request_data()
+
+
+# 是否指定年份数据
+while True:
+    is_year = input('是否指定年份数据？(y/n): ')
+    if is_year.lower() not in ['y', 'n']:
+        u.debug_print('输入错误：请输入 y 或 n !')
     else:
-        # 更新开奖数据
-        mf.requests_data()
-        
-        
-    
-    
+        year = None
+        break
 
-    
+# 验证年份数据
+if is_year == 'y':
+    year = input('请输入年份(yyyy): ')
+    while True:
+        if year.isdigit() and len(year) == 4:
+            break
+        else:
+            u.debug_print('输入错误：请输入正确的年份(yyyy)!')
 
-# def main():
-#     # 更新往期开奖数据
-#     is_update = input('是否需要下载更新到最新一期双色球数据?\n(y/n): ')
-#     if is_update == 'y':
-#         mf.requests_data()
+# 是否指定期数
+while True:
+    is_row = input('是否指定期数？(y/n): ')
+    if is_row.lower() not in ['y', 'n']:
+        u.debug_print('输入错误：请输入 y 或 n !')
+    else:
+        row_size = None
+        break
 
-#     # 打印往期开奖数据
-#     is_print = input('即将开始打印历史开奖数据, 是否需要更改期数(默认: 最新30期)\n(y/n): ')
-#     if is_print != 'y':
-#         mf.print_lottery_data()
-#     else:
-#         row = int(input('请输入需要打印的期数: '))
-#         mf.print_lottery_data(row=row)
+# 验证期数
+if is_row == 'y':
+    row_size = input('请输入期数,至少请填写5期及以上: ')
+    while True:
+        if row_size.isdigit() and int(row_size) >= 5:
+            break
+        else:
+            u.debug_print('输入错误或期数过少：请输入正确的期数!')
 
-#     # 生成红球排列组合
-#     is_make_combos = input('是否需要生成所有组合?\n(y/n): ')
-#     if is_make_combos == 'y':
-#         mf.make_all_combos()
+# 读取开奖数据
+data = u.get_latest_lottery_results(year=year, rows=row_size)
 
-#     # 打印历史每个数字出现的次数
-#     is_chunk = input('即将开始打印历史每个数字出现的次数, 是否需要更改默认期数(默认: 以10期为分割)\n(y/n): ')
-#     if is_chunk != 'y':
-#         mf.chunk_data()
-#     else:
-#         row = int(input('请输入需要打印的期数: '))
-#         mf.chunk_data(row_size=row)
+# 计算红球和值
+data = u.calc_sum_red_balls(data)
 
-#     # 清理3个及3个以上连号
-#     mf.debug_print('处理所有组合的数据...\n')
-#     is_check_consecutive_combos = input('是否去除包含3个或3个以上连号的组合?\n(y/n): ')
-#     if is_check_consecutive_combos == 'y':
+# 计算红球横向差值偏移量
+data = u.calc_offset_red_balls(data)
 
-#         mf.exception_consecutive_numbers()
+# 计算红球差值偏移量和值
+data = u.calc_sum_offset_red_balls(data)
 
-#     # 清理垃圾号码
-#     mf.debug_print('正在处理不包含3个及3个以上连号的数据...\n')
-#     set_condition = input('请设定区间和每个区间应包含的数的数量\n比如: 1-11:2,12-22:2,23-33:2\n')
-#     intervals = {}
-#     for i in set_condition.split(','):
-#         count = int(i.strip().split(':')[1])
-#         temp = i.strip().split(':')[0]
-#         start = int(temp.strip().split('-')[0])
-#         end = int(temp.strip().split('-')[1])
-#         interval = (start, end)
-#         intervals[interval] = count  # 设定区间和每个区间应包含的数的数量
+# 计算红球竖向差值偏移量
+data = u.calc_vertical_offset_red_balls(data)
 
-#     # 自选清理排除的号码
-#     set_exception_numbers = input('请输入想要排除的号码，用逗号隔开:\n')
-#     exception_numbers = []
-#     for i in set_exception_numbers.split(','):
-#         exception_numbers.append(int(i.strip()))  # 排除的号码
+# 计算红球竖向差值偏移量和值
+data = u.calc_sum_vertical_offset_red_balls(data)
 
-#     mf.get_condition_data(intervals, exception_numbers)
+# 计算连号
+data = u.calc_continuous_number_red_balls(data)
 
-#     # 是否清理2组以上的连号
-#     mf.debug_print('正在处理已经设定好区间及个数的数据...\n')
-#     is_check_consecutive_count = input('是否清理掉包含2组以上的连号组合?\n(y/n): ')
-#     if is_check_consecutive_count == 'y':
-#         mf.check_consecutive_count()
-#     else:
-#         mf.check_consecutive_count(2)
+# 计算红球差值偏移量和值的平均值
 
-if __name__ == '__main__':
-    main()
-    os.system('pause')
+# 打印分析结果到Excel
+u.print_to_excel('ssq', data)
