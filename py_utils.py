@@ -183,6 +183,37 @@ def calc_continuous_number_red_balls(data_lottery):
     return data_lottery
 
 
+def generate_trend_chart(data_lottery):
+    """生成双色球红球1-33和篮球1-16的走势图,并计算每个号码的遗漏值
+
+    Args:
+        data_lottery (list): 开奖数据
+
+    Returns:
+        list: 追加开奖数据红球1-33和篮球1-16的走势图列(共49列)
+    """
+
+    # 生成双色球红球1-33和篮球1-16的走势图
+    debug_print('生成双色球红球1-33和篮球1-16的走势图...')
+    new_data_lottery = [[] for i in range(len(data_lottery))]
+    for i in range(len(data_lottery)):
+        for j in range(0, 33):
+            if str(j) in data_lottery[i][2:8]:
+                new_data_lottery[i].append(str(j))
+            else:
+                new_data_lottery[i].append('0')
+
+        for j in range(0, 16):
+            if str(j) in data_lottery[i][8]:
+                new_data_lottery[i].append(str(j))
+
+            else:
+                new_data_lottery[i].append('0')
+
+    # 返回开奖数据
+    return new_data_lottery
+
+
 def print_to_excel(sheet, data_lottery):
     """输出结果到Excel
 

@@ -66,7 +66,12 @@ data = u.calc_sum_vertical_offset_red_balls(data)
 # 计算连号
 data = u.calc_continuous_number_red_balls(data)
 
-# 计算红球差值偏移量和值的平均值
+# 计算红球遗漏
+
+
+# 生成走势图
+new_data = u.generate_trend_chart(data)
+
 
 # 打印分析结果到Excel
-u.print_to_excel('ssq', data)
+u.print_to_excel('原始数据', data)
