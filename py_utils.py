@@ -1,5 +1,6 @@
 import datetime
 import pandas as pd
+import os
 
 path_asc = './Data/ssq_asc.txt'
 
@@ -51,6 +52,10 @@ def get_latest_lottery_results(year, rows):
             rows = len(data_lottery)
         data_lottery = data_lottery[-rows:]
 
+    # 将第2列以后的所有数据转换为整数类型
+    for i in range(len(data_lottery)):
+        data_lottery[i][2:] = [int(x) for x in data_lottery[i][2:]]
+
     # 返回开奖数据
     return data_lottery
 
@@ -68,8 +73,7 @@ def calc_sum_red_balls(data_lottery):
     # 计算红球和值
     debug_print('计算红球和值...')
     for i in range(len(data_lottery)):
-        data_lottery[i].append(str(sum([int(x) for x in data_lottery[i][2:8]])))
-
+        data_lottery[i].append(sum([x for x in data_lottery[i][2:8]]))
     # 返回开奖数据
     return data_lottery
 
@@ -87,11 +91,11 @@ def calc_offset_red_balls(data_lottery):
     # 计算每个红球横向差值偏移量
     debug_print('计算红球横向差值偏移量...')
     for i in range(len(data_lottery)):
-        data_lottery[i].append(str(int(data_lottery[i][3]) - int(data_lottery[i][2])))
-        data_lottery[i].append(str(int(data_lottery[i][4]) - int(data_lottery[i][3])))
-        data_lottery[i].append(str(int(data_lottery[i][5]) - int(data_lottery[i][4])))
-        data_lottery[i].append(str(int(data_lottery[i][6]) - int(data_lottery[i][5])))
-        data_lottery[i].append(str(int(data_lottery[i][7]) - int(data_lottery[i][6])))
+        data_lottery[i].append(data_lottery[i][3] - data_lottery[i][2])
+        data_lottery[i].append(data_lottery[i][4] - data_lottery[i][3])
+        data_lottery[i].append(data_lottery[i][5] - data_lottery[i][4])
+        data_lottery[i].append(data_lottery[i][6] - data_lottery[i][5])
+        data_lottery[i].append(data_lottery[i][7] - data_lottery[i][6])
 
     # 返回开奖数据
     return data_lottery
@@ -110,8 +114,7 @@ def calc_sum_offset_red_balls(data_lottery):
     # 计算红球横向差值偏移量和值
     debug_print('计算红球横向差值偏移量和值...')
     for i in range(len(data_lottery)):
-        data_lottery[i].append(str(sum([int(x) for x in data_lottery[i][10:15]])))
-
+        data_lottery[i].append(sum([x for x in data_lottery[i][10:15]]))
     # 返回开奖数据
     return data_lottery
 
@@ -131,9 +134,9 @@ def calc_vertical_offset_red_balls(data_lottery):
     for i in range(len(data_lottery)):
         for j in range(2, 8):
             if i == 0:
-                data_lottery[i].append('0')
+                data_lottery[i].append(0)
             else:
-                data_lottery[i].append(str(int(data_lottery[i][j]) - int(data_lottery[i-1][j])))
+                data_lottery[i].append(data_lottery[i][j] - data_lottery[i-1][j])
 
     # 返回开奖数据
     return data_lottery
@@ -152,7 +155,7 @@ def calc_sum_vertical_offset_red_balls(data_lottery):
     # 计算红球纵向差值偏移量和值
     debug_print('计算红球纵向差值偏移量和值...')
     for i in range(len(data_lottery)):
-        data_lottery[i].append(str(sum([int(x) for x in data_lottery[i][16:22]])))
+        data_lottery[i].append(sum([x for x in data_lottery[i][16:22]]))
 
     # 返回开奖数据
     return data_lottery
@@ -173,10 +176,10 @@ def calc_continuous_number_red_balls(data_lottery):
     num = 0
     for i in range(len(data_lottery)):
         for j in range(2, 7):
-            if int(data_lottery[i][j]) - int(data_lottery[i][j+1]) == -1:
+            if (data_lottery[i][j] - data_lottery[i][j+1]) == -1:
                 num += 1
 
-        data_lottery[i].append(str(num))
+        data_lottery[i].append(num)
         num = 0
 
     # 返回开奖数据
@@ -196,19 +199,29 @@ def generate_trend_chart(data_lottery):
     # 生成双色球红球1-33和篮球1-16的走势图
     debug_print('生成双色球红球1-33和篮球1-16的走势图...')
     new_data_lottery = [[] for i in range(len(data_lottery))]
+    miss_num = 1
     for i in range(len(data_lottery)):
-        for j in range(0, 33):
-            if str(j) in data_lottery[i][2:8]:
-                new_data_lottery[i].append(str(j))
-            else:
-                new_data_lottery[i].append('0')
+        for j in range(1, 34):
 
-        for j in range(0, 16):
-            if str(j) in data_lottery[i][8]:
-                new_data_lottery[i].append(str(j))
-
+            if j in data_lottery[i][2:8]:
+                new_data_lottery[i].append(j)
+                miss_num == 1
             else:
-                new_data_lottery[i].append('0')
+                # 计算历史遗漏值
+                if i == 0:
+                    new_data_lottery[i].append('y%d' % miss_num)
+                elif 'y' in str(new_data_lottery[i-1][j-1]):
+                    miss_num = int(new_data_lottery[i-1][j-1].replace('y', '')) + 1
+                    new_data_lottery[i].append('y%d' % miss_num)
+                else:
+                    miss_num = 1
+                    new_data_lottery[i].append('y%d' % miss_num)
+
+        for j in range(1, 17):
+            if j == data_lottery[i][8]:
+                new_data_lottery[i].append(j)
+            else:
+                new_data_lottery[i].append(0)
 
     # 返回开奖数据
     return new_data_lottery
@@ -222,22 +235,29 @@ def print_to_excel(sheet, data_lottery):
         data (list): 数据源
     """
 
-    debug_print('输出结果到文件...')
-    headers = ('期号,开奖日期,红球1,红球2,红球3,红球4,红球5,红球6,蓝球,红球和值,'
-               '红球1偏移(横),红球2偏移(横),红球3偏移(横),红球4偏移(横),红球5偏移(横),红球偏移和值(横),'
-               '红球1偏移(竖),红球2偏移(竖),红球3偏移(竖),红球4偏移(竖),红球5偏移(竖),红球6偏移(竖),红球偏移和值(竖),'
-               '连号次数').split(',')
+    debug_print(f'输出{sheet}到文件...')
+    if sheet == '原始数据':
+        headers = ('期号,开奖日期,红球1,红球2,红球3,红球4,红球5,红球6,蓝球,红球和值,'
+                   '红球1偏移(横),红球2偏移(横),红球3偏移(横),红球4偏移(横),红球5偏移(横),红球偏移和值(横),'
+                   '红球1偏移(竖),红球2偏移(竖),红球3偏移(竖),红球4偏移(竖),红球5偏移(竖),红球6偏移(竖),红球偏移和值(竖),'
+                   '连号次数').split(',')
+    elif sheet == '走势图':
+        headers = [str(i).zfill(2) for i in range(1, 34)] + [str(i).zfill(2) for i in range(1, 17)]
 
     # 创建DataFrame对象
     df = pd.DataFrame(data_lottery, columns=headers)
 
-    # 将第1列转换为整数类型
-    df.iloc[:, 0] = df.iloc[:, 0].astype(int)
-
-    # 将第2列以后的所有数据转换为整数类型
-    df.iloc[:, 2:] = df.iloc[:, 2:].astype(int)
-
-    df.to_excel('./Data/output.xlsx', sheet_name=sheet, index=False, header=True)
-    debug_print('分析完成!')
+    # 创建新分析文件
+    if not os.path.exists('./Data/output.xlsx'):
+        with pd.ExcelWriter('./Data/output.xlsx', mode='w') as writer:
+            df.to_excel(writer, sheet_name=sheet, index=False, header=True)
+    # 追加新sheet前remove旧sheet
+    else:
+        with pd.ExcelWriter('./Data/output.xlsx', mode='a') as writer:
+            try:
+                writer.book.remove(writer.book[sheet])
+            except:
+                pass
+            df.to_excel(writer, sheet_name=sheet, index=False, header=True)
 
 # def analyze_lottery_results():
