@@ -73,5 +73,7 @@ u.print_to_excel('原始数据', data)
 new_data = u.generate_trend_chart(data)
 u.print_to_excel('走势图', new_data)
 
+# 格式化output
+u.beautify_output()
 
 u.debug_print('分析完毕...')
