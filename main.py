@@ -8,7 +8,6 @@ u.debug_print('程序开始运行...')
 # 更新开奖数据
 req.request_data()
 
-
 # 是否指定年份数据
 while True:
     is_year = input('是否指定年份数据？(y/n): ')
@@ -20,12 +19,15 @@ while True:
 
 # 验证年份数据
 if is_year == 'y':
-    year = input('请输入年份(yyyy): ')
+    year = input('请输入年份(yyyy) 或 指定年份期间(yyyy-yyyy): ')
     while True:
+        
         if year.isdigit() and len(year) == 4:
             break
+        elif len(year) == 9 and year[4] == '-':
+            break
         else:
-            u.debug_print('输入错误：请输入正确的年份(yyyy)!')
+            u.debug_print('输入错误：请输入正确的年份(yyyy) 或 指定年份期间(yyyy-yyyy)!')
 
 # 是否指定期数
 while True:
@@ -51,6 +53,9 @@ data = u.get_latest_lottery_results(year=year, rows=row_size)
 # 计算红球和值
 data = u.calc_sum_red_balls(data)
 
+# 计算开奖和值
+data = u.calc_sum_lottery(data)
+
 # 计算红球横向差值偏移量
 data = u.calc_offset_red_balls(data)
 
@@ -67,11 +72,11 @@ data = u.calc_sum_vertical_offset_red_balls(data)
 data = u.calc_continuous_number_red_balls(data)
 
 # 打印分析结果到Excel
-u.print_to_excel('原始数据', data)
+u.print_to_excel('Raw Data', data)
 
 # 生成走势图
 new_data = u.generate_trend_chart(data)
-u.print_to_excel('走势图', new_data)
+u.print_to_excel('Trend Chart', new_data)
 
 # 格式化output
 u.beautify_output()

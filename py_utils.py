@@ -26,10 +26,10 @@ def debug_print(message):
 
 
 def get_latest_lottery_results(year, rows):
-    """读取开建该数据
+    """读取开奖该数据
 
     Args:
-        year (int): 开奖年份
+        year (int): 开奖年份(yyyy) 或 (yyyy-yyyy)
         rows (int): 开奖数据行
 
     Returns:
@@ -44,8 +44,16 @@ def get_latest_lottery_results(year, rows):
         if year != None:
             for line in f:
                 fields = line.strip().split()[:9]
-                if fields[0].startswith(year):
-                    data_lottery.append(fields)
+                # 如果指定年份期间
+                if '-' in year:
+                    start_year = int(year.split('-')[0])
+                    end_year = int(year.split('-')[1])
+                    if start_year <= int(fields[0][:4]) <= end_year:
+                        data_lottery.append(fields)
+                # 不指定年份期间
+                else:
+                    if fields[0].startswith(year):
+                        data_lottery.append(fields)
         # 不指定年份
         else:
             for line in f:
@@ -55,8 +63,9 @@ def get_latest_lottery_results(year, rows):
     # 返回指定行数的数据
     if rows != None:
         if int(rows) > len(data_lottery):
+            debug_print(f'期数不足{rows}期, 只返回{len(data_lottery)}期...')
             rows = len(data_lottery)
-        data_lottery = data_lottery[-rows:]
+        data_lottery = data_lottery[-int(rows):]
 
     # 将第2列以后的所有数据转换为整数类型
     for i in range(len(data_lottery)):
@@ -80,6 +89,26 @@ def calc_sum_red_balls(data_lottery):
     debug_print('计算红球和值...')
     for i in range(len(data_lottery)):
         data_lottery[i].append(sum([x for x in data_lottery[i][2:8]]))
+    # 返回开奖数据
+    return data_lottery
+
+# 计算开奖和值
+
+
+def calc_sum_lottery(data_lottery):
+    """计算开奖和值
+
+    Args:
+        data_lottery (list): 开奖数据
+
+    Returns:
+        list: 追加开奖数据和值列(共1列)
+    """
+
+    # 计算开奖和值
+    debug_print('计算开奖(红球和篮球)和值...')
+    for i in range(len(data_lottery)):
+        data_lottery[i].append(sum([x for x in data_lottery[i][2:9]]))
     # 返回开奖数据
     return data_lottery
 
@@ -120,7 +149,7 @@ def calc_sum_offset_red_balls(data_lottery):
     # 计算红球横向差值偏移量和值
     debug_print('计算红球横向差值偏移量和值...')
     for i in range(len(data_lottery)):
-        data_lottery[i].append(sum([x for x in data_lottery[i][10:15]]))
+        data_lottery[i].append(sum([x for x in data_lottery[i][11:16]]))
     # 返回开奖数据
     return data_lottery
 
@@ -161,7 +190,7 @@ def calc_sum_vertical_offset_red_balls(data_lottery):
     # 计算红球纵向差值偏移量和值
     debug_print('计算红球纵向差值偏移量和值...')
     for i in range(len(data_lottery)):
-        data_lottery[i].append(sum([x for x in data_lottery[i][16:22]]))
+        data_lottery[i].append(sum([x for x in data_lottery[i][17:23]]))
 
     # 返回开奖数据
     return data_lottery
@@ -257,13 +286,29 @@ def print_to_excel(sheet, data_lottery):
 
     debug_print(f'输出{sheet}到文件...')
     headers = []
-    if sheet == '原始数据':
-        headers = ('期号,开奖日期,红球1,红球2,红球3,红球4,红球5,红球6,蓝球,红球和值,'
-                   '红球1偏移(横),红球2偏移(横),红球3偏移(横),红球4偏移(横),红球5偏移(横),红球偏移和值(横),'
-                   '红球1偏移(竖),红球2偏移(竖),红球3偏移(竖),红球4偏移(竖),红球5偏移(竖),红球6偏移(竖),红球偏移和值(竖),'
-                   '连号次数').split(',')
-    elif sheet == '走势图':
-        headers = '期号,开奖日期,' + ','.join([str(i).zfill(2) for i in range(1, 34)] + [str(i).zfill(2) for i in range(1, 17)])
+    if sheet == 'Raw Data':
+        headers = ('Issue No.,'
+                   'Date of Draw,'
+                   'Red01,Red02,Red03,Red04,Red05,Red06,Blue,'
+                   'Red Sum,'
+                   'All Sum,'
+                   'Red01 Offset(Horizontal),'
+                   'Red02 Offset(Horizontal),'
+                   'Red03 Offset(Horizontal),'
+                   'Red04 Offset(Horizontal),'
+                   'Red05 Offset(Horizontal),'
+                   'Red Offset Sum(Horizontal),'
+                   'Red01 Offset(Vertical),'
+                   'Red02 Offset(Vertical),'
+                   'Red03 Offset(Vertical),'
+                   'Red04 Offset(Vertical),'
+                   'Red05 Offset(Vertical),'
+                   'Red06 Offset(Vertical),'
+                   'Red Offset Sum(Vertical),'
+                   'Consecutive').split(',')
+
+    elif sheet == 'Trend Chart':
+        headers = 'Issue No.,Date of Draw,' + ','.join([str(i).zfill(2) for i in range(1, 34)] + [str(i).zfill(2) for i in range(1, 17)])
         headers = headers.split(',')
 
     # 创建DataFrame对象
@@ -294,7 +339,7 @@ def beautify_output():
     wb = openpyxl.load_workbook('./Data/output.xlsx')
 
     # 格式化原始数据
-    ws = wb['原始数据']
+    ws = wb['Raw Data']
 
     # 设置sheet缩放为85%
     ws.sheet_view.zoomScale = 85
@@ -308,11 +353,9 @@ def beautify_output():
     # 设置原始数据样式
     for col in ws.iter_cols():
         pass
-        
-
 
     # 格式化走势图
-    ws = wb['走势图']
+    ws = wb['Trend Chart']
 
     # 设置sheet缩放为85%
     ws.sheet_view.zoomScale = 85
@@ -380,3 +423,10 @@ def beautify_output():
 
     # 保存文件
     wb.save('./Data/output.xlsx')
+
+# 清理all_combos垃圾号码
+def clear_all_combos_case():
+    """清理all_combos垃圾号码
+    """
+
+    debug_print('清理数据集合中垃圾号码...')
