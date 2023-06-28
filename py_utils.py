@@ -1,3 +1,4 @@
+import numpy as np
 from openpyxl.styles import Alignment
 from openpyxl.styles import PatternFill
 from openpyxl.styles import Font
@@ -7,6 +8,7 @@ import datetime
 import openpyxl
 import pandas as pd
 import os
+import shutil
 
 path_asc = './Data/ssq_asc.txt'
 
@@ -221,6 +223,33 @@ def calc_continuous_number_red_balls(data_lottery):
     return data_lottery
 
 
+def find_line_num_in_all_combo(data_lottery):
+    """ 查找所在all_combo.txt文件中的行号
+
+    Args:
+        data_lottery (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+
+    # 获取所有号码组合
+    with open('./Data/all_combos.txt', mode='r', encoding='utf-8') as f:
+        all_combos = [line.strip() for line in f.readlines()]
+
+    # 将数据转换为data frame
+    df = pd.DataFrame(all_combos)
+
+    for i in range(len(data_lottery)):
+        # 将data_lottery的2到7列转换成字符串以逗号分割
+        data_lottery_str = ','.join(str(x) for x in data_lottery[i][2:8])
+
+        # 查找所在行号
+        line_num = df[df[0].str.contains(data_lottery_str)].index.tolist()
+
+    debug_print('')
+
+
 def generate_trend_chart(data_lottery):
     """生成双色球红球1-33和篮球1-16的走势图,并计算每个号码的遗漏值
 
@@ -402,7 +431,7 @@ def beautify_output():
                 # 设置红球格式
                 if cell.col_idx >= 3 and cell.col_idx <= 35:
                     if 'y' in str(cell.value):
-                        cell.value = cell.value.replace('y', '')
+                        cell.value = str(cell.value).replace('y', '')
                         cell.fill = PatternFill(fill_type='solid', fgColor='f2f1dd')
                         cell.font = Font(name='Consolas', size=11, color='D9D9D9', bold=True)
                     else:
@@ -411,7 +440,7 @@ def beautify_output():
                 # 设置篮球格式
                 elif cell.col_idx >= 36 and cell.col_idx <= 51:
                     if 'y' in str(cell.value):
-                        cell.value = cell.value.replace('y', '')
+                        cell.value = str(cell.value).replace('y', '')
                         cell.fill = PatternFill(fill_type='solid', fgColor='d9effc')
                         cell.font = Font(name='Consolas', size=11, color='D9D9D9', bold=True)
                     else:
@@ -424,9 +453,9 @@ def beautify_output():
     # 保存文件
     wb.save('./Data/output.xlsx')
 
-# 清理all_combos垃圾号码
-def clear_all_combos_case():
-    """清理all_combos垃圾号码
-    """
 
-    debug_print('清理数据集合中垃圾号码...')
+def check_file_exists(path):
+    if os.path.exists(path=path):
+        return True
+    else:
+        return False

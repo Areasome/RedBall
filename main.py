@@ -1,9 +1,22 @@
 import pandas as pd
 import py_utils as u
 import py_request as req
-
+import py_combos as com
 
 u.debug_print('程序开始运行...')
+
+# 如果没有有all_combo则生成
+if not u.check_file_exists('./Data/all_combos.txt'):
+    com.make_all_combos()
+else:
+    u.debug_print('检测到已存在all_combos.txt文件,跳过生成...')
+
+# 如果没有有red_combo则生成
+if not u.check_file_exists('./Data/red_combos.txt'):
+    com.make_red_combos()
+else:
+    u.debug_print('检测到已存在red_combos.txt文件,跳过生成...')
+
 
 # 更新开奖数据
 req.request_data()
@@ -21,7 +34,7 @@ while True:
 if is_year == 'y':
     year = input('请输入年份(yyyy) 或 指定年份期间(yyyy-yyyy): ')
     while True:
-        
+
         if year.isdigit() and len(year) == 4:
             break
         elif len(year) == 9 and year[4] == '-':
