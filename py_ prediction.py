@@ -3,6 +3,7 @@ import itertools
 import pandas as pd
 
 s_rows = -4
+e_rows = 0
 
 # 读取output Excel Raw Data sheet第二列倒数5行的数据的数据
 df = pd.read_excel('./Data/output.xlsx', sheet_name='Raw Data')
@@ -15,32 +16,32 @@ for i in range(2, 9):
     # red 01
     if i == 2:
         e_rows = s_rows - 5
-        
+
     # red 02
     if i == 3:
         e_rows = s_rows - 5
-    
+
     # red 03
     if i == 4:
         e_rows = s_rows - 6
-    
+
     # red 04
     if i == 5:
         e_rows = s_rows - 8
-        
+
     # red 05
     if i == 6:
         e_rows = s_rows - 7
-        
+
     # red 06
     if i == 7:
         e_rows = s_rows - 6
-        
+
     # blue 01
     if i == 8:
         e_rows = s_rows - 5
 
-    numbers = df.iloc[s_rows:(e_rows):-1, i].tolist()
+    numbers = df.iloc[s_rows:e_rows:-1, i].tolist()
     permutations = list(itertools.permutations(numbers))
 
     for permutation in permutations:

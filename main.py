@@ -5,17 +5,17 @@ import py_combos as com
 
 u.debug_print('程序开始运行...')
 
-# 如果没有有all_combo则生成
-if not u.check_file_exists('./Data/all_combos.txt'):
-    com.make_all_combos()
-else:
-    u.debug_print('检测到已存在all_combos.txt文件,跳过生成...')
+# # 如果没有有all_combo则生成
+# if not u.check_file_exists('./Data/all_combos.txt'):
+#     com.make_all_combos()
+# else:
+#     u.debug_print('检测到已存在all_combos.txt文件,跳过生成...')
 
-# 如果没有有red_combo则生成
-if not u.check_file_exists('./Data/red_combos.txt'):
-    com.make_red_combos()
-else:
-    u.debug_print('检测到已存在red_combos.txt文件,跳过生成...')
+# # 如果没有有red_combo则生成
+# if not u.check_file_exists('./Data/red_combos.txt'):
+#     com.make_red_combos()
+# else:
+#     u.debug_print('检测到已存在red_combos.txt文件,跳过生成...')
 
 
 # 更新开奖数据
